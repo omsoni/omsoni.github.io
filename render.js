@@ -24,13 +24,45 @@
   }
   const mount = (parent, child) => { if (child) parent.appendChild(child); return parent; };
 
-  /* ---------- PlantUML: encode source as hex (~h), no library needed ---------- */
-  function plantumlUrl(source) {
+  /* ---------- PlantUML encoding (no external library) ----------
+     Primary: DEFLATE + PlantUML base64 — compact, handles large diagrams.
+     Fallback: hex (~h) for browsers without CompressionStream.            */
+  function plantumlEnc6(b) {
+    b &= 0x3f;
+    if (b < 10) return String.fromCharCode(48 + b);
+    b -= 10; if (b < 26) return String.fromCharCode(65 + b);
+    b -= 26; if (b < 26) return String.fromCharCode(97 + b);
+    b -= 26; return b === 0 ? "-" : b === 1 ? "_" : "?";
+  }
+  function plantumlEncode64(data) {
+    const a3 = (b1, b2, b3) =>
+      plantumlEnc6(b1 >> 2) +
+      plantumlEnc6(((b1 & 0x3) << 4) | (b2 >> 4)) +
+      plantumlEnc6(((b2 & 0xf) << 2) | (b3 >> 6)) +
+      plantumlEnc6(b3 & 0x3f);
+    let r = "";
+    for (let i = 0; i < data.length; i += 3) {
+      if (i + 2 === data.length) r += a3(data[i], data[i + 1], 0);
+      else if (i + 1 === data.length) r += a3(data[i], 0, 0);
+      else r += a3(data[i], data[i + 1], data[i + 2]);
+    }
+    return r;
+  }
+  async function plantumlUrl(source) {
+    const fmt = SITE.plantumlFormat === "png" ? "png" : "svg";
     const bytes = new TextEncoder().encode(source);
+    if (typeof CompressionStream !== "undefined") {
+      try {
+        const cs = new CompressionStream("deflate-raw");
+        const w = cs.writable.getWriter();
+        w.write(bytes); w.close();
+        const buf = new Uint8Array(await new Response(cs.readable).arrayBuffer());
+        return `${SITE.plantumlServer}/${fmt}/${plantumlEncode64(buf)}`;
+      } catch (e) { /* fall through to hex */ }
+    }
     let hex = "";
     for (const b of bytes) hex += b.toString(16).padStart(2, "0");
-    const fmt = SITE.plantumlFormat === "png" ? "png" : "svg";
-    return { url: `${SITE.plantumlServer}/${fmt}/~h${hex}`, fmt };
+    return `${SITE.plantumlServer}/${fmt}/~h${hex}`;
   }
 
   /* ---------- links ---------- */
@@ -65,27 +97,26 @@
       return fig;
     }
     if (d.type === "plantuml") {
-      const { url } = plantumlUrl(d.source);
       const fig = el("figure", { class: "figure" });
+      const fail = function () {
+        fig.classList.add("figure--error");
+        fig.textContent = "";
+        mount(fig, el("p", { text: "Diagram failed to render. PlantUML source:" }));
+        mount(fig, el("pre", { text: d.source }));
+      };
       const img = el("img", {
-        src: url,
         alt: d.caption || "PlantUML diagram",
         loading: "lazy",
-        onerror: function () {
-          fig.classList.add("figure--error");
-          fig.textContent = "";
-          mount(fig, el("p", { text: "Diagram failed to render. PlantUML source:" }));
-          mount(fig, el("pre", { text: d.source }));
-        },
+        onerror: fail,
       });
       mount(fig, img);
       if (d.caption) mount(fig, el("figcaption", { text: d.caption }));
       // collapsible source so the diagram stays editable/inspectable
-      const details = el("details", {}, [
+      mount(fig, el("details", {}, [
         el("summary", { text: "View PlantUML source" }),
         el("pre", { text: d.source }),
-      ]);
-      mount(fig, details);
+      ]));
+      plantumlUrl(d.source).then((url) => { img.src = url; }).catch(fail);
       return fig;
     }
     return null;
@@ -134,6 +165,43 @@
     }
   }
 
+  /* ---------- minimal markdown (headings, bold, code, bullet lists) ---------- */
+  function mdInline(text) {
+    // escape, then apply **bold** and `code`
+    const span = el("span");
+    let html = text
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/`([^`]+?)`/g, "<code>$1</code>");
+    span.innerHTML = html;
+    return span;
+  }
+  function renderMarkdown(md) {
+    const frag = document.createDocumentFragment();
+    const lines = md.replace(/\r\n/g, "\n").split("\n");
+    let i = 0, para = [], list = null;
+    const flushPara = () => {
+      if (para.length) { mount(frag, el("p", {}, mdInline(para.join(" ")))); para = []; }
+    };
+    const flushList = () => { if (list) { frag.appendChild(list); list = null; } };
+    while (i < lines.length) {
+      const line = lines[i].trim();
+      if (!line) { flushPara(); flushList(); }
+      else if (/^#{1,6}\s/.test(line)) {
+        flushPara(); flushList();
+        const level = line.match(/^#+/)[0].length;
+        mount(frag, el("h" + Math.min(level + 2, 6), {}, mdInline(line.replace(/^#+\s/, ""))));
+      } else if (/^[-*]\s+/.test(line)) {
+        flushPara();
+        if (!list) list = el("ul", { class: "md-list" });
+        mount(list, el("li", {}, mdInline(line.replace(/^[-*]\s+/, ""))));
+      } else { flushList(); para.push(line); }
+      i++;
+    }
+    flushPara(); flushList();
+    return frag;
+  }
+
   /* ---------- sections ---------- */
   function renderSection(section) {
     const card = el("article", { class: "card" });
@@ -143,6 +211,7 @@
         mount(card, el("p", { text: p }))
       );
     }
+    if (section.markdown) card.appendChild(renderMarkdown(section.markdown));
     renderDiagrams(section.diagrams).forEach((fig) => mount(card, fig));
     mount(card, renderLinks(section.links));
     if (section.repos) renderRepos(card, section.repos);
@@ -150,24 +219,43 @@
   }
 
   /* ---------- header / footer ---------- */
+  function flatNav() {
+    const out = [];
+    SITE.nav.forEach((n) => { out.push(n); (n.children || []).forEach((c) => out.push(c)); });
+    return out;
+  }
   function currentPageKey() {
     const body = document.body;
     if (body.dataset.page) return body.dataset.page;
     const file = location.pathname.split("/").pop() || "index.html";
-    const match = SITE.nav.find((n) => n.href === file);
+    const match = flatNav().find((n) => n.href === file);
     return match ? match.key : "home";
+  }
+  // a top-level item is active if it OR one of its children is the current page
+  function isBranchActive(item, activeKey) {
+    return item.key === activeKey || (item.children || []).some((c) => c.key === activeKey);
+  }
+
+  function renderNavItem(item, activeKey) {
+    if (item.children && item.children.length) {
+      const trigger = el("a", {
+        href: item.href,
+        class: "site-nav__top" + (isBranchActive(item, activeKey) ? " is-active" : ""),
+      }, [item.label + " ", el("span", { class: "site-nav__caret", text: "▾" })]);
+      const submenu = el("div", { class: "site-nav__submenu" },
+        item.children.map((c) =>
+          el("a", { href: c.href, class: c.key === activeKey ? "is-active" : "", text: c.label })
+        )
+      );
+      return el("div", { class: "site-nav__group" }, [trigger, submenu]);
+    }
+    return el("a", { href: item.href, class: item.key === activeKey ? "is-active" : "", text: item.label });
   }
 
   function renderHeader(activeKey) {
     const host = document.getElementById("site-header");
     if (!host) return;
-    const nav = el(
-      "nav",
-      { class: "site-nav" },
-      SITE.nav.map((n) =>
-        el("a", { href: n.href, class: n.key === activeKey ? "is-active" : "", text: n.label })
-      )
-    );
+    const nav = el("nav", { class: "site-nav" }, SITE.nav.map((n) => renderNavItem(n, activeKey)));
     host.appendChild(
       el("header", { class: "site-header" },
         el("div", { class: "site-header__inner" }, [

@@ -77,6 +77,28 @@ a:hover { color: var(--accent-dk); }
 .site-nav a:hover { color: #fff; background: rgba(255, 255, 255, .08); }
 .site-nav a.is-active { color: #fff; background: var(--accent); }
 
+/* dropdown for nav items with children */
+.site-nav__group { position: relative; }
+.site-nav__caret { font-size: .7em; opacity: .8; }
+.site-nav__submenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 220px;
+  background: #111827;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 8px;
+  padding: .35rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .35);
+  display: none;
+  flex-direction: column;
+  gap: .15rem;
+  z-index: 60;
+}
+.site-nav__group:hover .site-nav__submenu,
+.site-nav__group:focus-within .site-nav__submenu { display: flex; }
+.site-nav__submenu a { white-space: normal; }
+
 /* ---------- Layout ---------- */
 main {
   max-width: var(--maxw);
@@ -112,7 +134,12 @@ main {
   margin-bottom: 1.25rem;
 }
 .card > h2 { margin-top: 0; font-size: 1.4rem; }
+.card h3 { font-size: 1.1rem; margin: 1.1rem 0 .4rem; }
+.card h4 { font-size: 1rem; margin: 1rem 0 .35rem; color: var(--muted); }
 .card p { margin: .5rem 0; }
+.card code { background: #eef2f7; padding: .1rem .35rem; border-radius: 4px; font-size: .9em; }
+.md-list { margin: .35rem 0 .75rem; padding-left: 1.3rem; }
+.md-list li { margin: .2rem 0; }
 
 /* ---------- Link rows ---------- */
 .links {
