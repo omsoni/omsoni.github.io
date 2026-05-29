@@ -89,10 +89,77 @@
     return el("ul", { class: "links" }, links.map(renderLink));
   }
 
-  /* ---------- diagrams / images ---------- */
+  /* ---------- diagrams / images ----------
+     Adds a zoom/pan viewport: zoom in/out, fit-to-width, actual size,
+     drag-to-pan, ctrl/⌘+wheel zoom, double-click zoom, and open-full-size.
+     Returns the "Open ↗" anchor so the caller can set its href.          */
+  function attachZoomControls(fig, img) {
+    fig.classList.add("figure--zoom");
+    const viewport = el("div", { class: "figure__viewport" });
+    viewport.appendChild(img);
+
+    const label = el("span", { class: "figure__zoomlevel", text: "—" });
+    const btn = (txt, title, on) =>
+      el("button", { class: "figure__btn", type: "button", title: title, "aria-label": title, onclick: on, text: txt });
+    const openLink = el("a", {
+      class: "figure__btn", target: "_blank", rel: "noopener noreferrer",
+      text: "Open ↗", title: "Open full size in a new tab",
+    });
+
+    let scale = 1, natW = 0;
+    const apply = () => {
+      if (natW) { img.style.width = natW * scale + "px"; img.style.maxWidth = "none"; }
+      label.textContent = natW ? Math.round(scale * 100) + "%" : "—";
+    };
+    const zoom = (f) => { scale = Math.max(0.1, Math.min(8, scale * f)); apply(); };
+    const fit = () => { if (natW) { scale = Math.max(0.1, (viewport.clientWidth - 4) / natW); apply(); } };
+
+    const toolbar = el("div", { class: "figure__toolbar" }, [
+      btn("−", "Zoom out", () => zoom(1 / 1.25)),
+      btn("+", "Zoom in", () => zoom(1.25)),
+      btn("Fit", "Fit to width", fit),
+      btn("1:1", "Actual size", () => { scale = 1; apply(); }),
+      label,
+      openLink,
+    ]);
+    fig.appendChild(toolbar);
+    fig.appendChild(viewport);
+
+    const onReady = () => { natW = img.naturalWidth || 0; fit(); };
+    if (img.complete && img.naturalWidth) onReady();
+    else img.addEventListener("load", onReady);
+
+    // drag-to-pan via native scroll
+    let drag = false, sx = 0, sy = 0, sl = 0, st = 0;
+    viewport.addEventListener("pointerdown", (e) => {
+      drag = true;
+      try { viewport.setPointerCapture(e.pointerId); } catch (_) {}
+      sx = e.clientX; sy = e.clientY; sl = viewport.scrollLeft; st = viewport.scrollTop;
+      viewport.classList.add("is-grabbing");
+    });
+    viewport.addEventListener("pointermove", (e) => {
+      if (!drag) return;
+      viewport.scrollLeft = sl - (e.clientX - sx);
+      viewport.scrollTop = st - (e.clientY - sy);
+    });
+    const endDrag = () => { drag = false; viewport.classList.remove("is-grabbing"); };
+    viewport.addEventListener("pointerup", endDrag);
+    viewport.addEventListener("pointercancel", endDrag);
+    viewport.addEventListener("wheel", (e) => {
+      if (e.ctrlKey || e.metaKey) { e.preventDefault(); zoom(e.deltaY < 0 ? 1.1 : 0.9); }
+    }, { passive: false });
+    viewport.addEventListener("dblclick", () => zoom(1.3));
+
+    return openLink;
+  }
+
   function renderDiagram(d) {
     if (d.type === "image") {
-      const fig = el("figure", { class: "figure" }, el("img", { src: d.src, alt: d.caption || "image", loading: "lazy" }));
+      const fig = el("figure", { class: "figure" });
+      const img = el("img", { alt: d.caption || "image", loading: "lazy" });
+      const open = attachZoomControls(fig, img);
+      open.href = d.src;
+      img.src = d.src;
       if (d.caption) mount(fig, el("figcaption", { text: d.caption }));
       return fig;
     }
@@ -104,19 +171,15 @@
         mount(fig, el("p", { text: "Diagram failed to render. PlantUML source:" }));
         mount(fig, el("pre", { text: d.source }));
       };
-      const img = el("img", {
-        alt: d.caption || "PlantUML diagram",
-        loading: "lazy",
-        onerror: fail,
-      });
-      mount(fig, img);
+      const img = el("img", { alt: d.caption || "PlantUML diagram", loading: "lazy", onerror: fail });
+      const open = attachZoomControls(fig, img);
       if (d.caption) mount(fig, el("figcaption", { text: d.caption }));
       // collapsible source so the diagram stays editable/inspectable
       mount(fig, el("details", {}, [
         el("summary", { text: "View PlantUML source" }),
         el("pre", { text: d.source }),
       ]));
-      plantumlUrl(d.source).then((url) => { img.src = url; }).catch(fail);
+      plantumlUrl(d.source).then((url) => { img.src = url; open.href = url; }).catch(fail);
       return fig;
     }
     return null;
