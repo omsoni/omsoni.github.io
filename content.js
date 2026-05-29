@@ -202,6 +202,42 @@ User -> "App": question
             },
           ],
         },
+        {
+          heading: "RAG Assistant — Medical Q&A over the Merck Manual",
+          body:
+            "A Retrieval-Augmented Generation system that answers clinical questions " +
+            "grounded in the Merck Manual. Generation uses Meta-Llama-3-8B-Instruct; " +
+            "retrieval pairs a ChromaDB vector store with a cross-encoder reranker " +
+            "(top-20 → top-5). An independent Mistral-7B judge LLM scores answers for " +
+            "groundedness, relevance, and faithfulness. Shipped as a Dockerized Hugging " +
+            "Face Space with a Flask API and Streamlit UI — covering the full lifecycle " +
+            "from prompt engineering → retrieve/rerank/generate → evaluation → deployment.",
+          diagrams: [
+            {
+              type: "image",
+              caption: "RAG Assistant architecture",
+              src: "https://drive.google.com/uc?id=1-0_pjR7gg07Zxt7uiZFHP-xpWqBfeqT_",
+            },
+          ],
+          links: [
+            { label: "RAG Assistant (repo)", url: "https://github.com/omsoni/llm-rag-work", type: "github" },
+            { label: "Hugging Face", url: "https://huggingface.co/omsoni", type: "external" },
+          ],
+        },
+        {
+          heading: "Predictive Maintenance — Wind Turbine Failure",
+          body:
+            "Binary classification of wind-turbine generator failure from 40 anonymized " +
+            "sensor features under severe class imbalance (~95% / 5%). Iterates through " +
+            "six feedforward neural-network architectures (BatchNorm, Dropout, He init, " +
+            "AdamW, L2, focal loss, LR scheduling) and selects the final model with a " +
+            "cost-sensitive framework that weights false negatives at 10× false positives. " +
+            "The chosen model reaches ~99% accuracy with ~88% failure recall. Built with " +
+            "TensorFlow/Keras and scikit-learn.",
+          links: [
+            { label: "Predictive Maintenance (repo)", url: "https://github.com/omsoni/predictive-maintenance", type: "github" },
+          ],
+        },
       ],
     },
 
