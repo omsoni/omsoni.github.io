@@ -349,6 +349,10 @@
       el("p", { class: "role", text: p.role }),
       el("p", { class: "blurb", text: p.blurb }),
     ]);
+    if (p.strengths && p.strengths.length) {
+      mount(hero, el("ul", { class: "hero__strengths" },
+        p.strengths.map((s) => el("li", { class: "pill", text: s }))));
+    }
     if (p.links && p.links.length) {
       mount(hero, el("ul", { class: "links hero__links" }, p.links.map(renderLink)));
     }

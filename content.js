@@ -27,18 +27,27 @@ const SITE = {
 
   profile: {
     name: "Om Soni",
-    role: "Senior Enterprise Architect",
-    tagline: "Software · AI/ML · Enterprise Architecture",
+    role: "Architecture Leader · Enterprise AI Strategist & Enabler · Principal Solution Architect",
+    tagline: "Enterprise & Solution Architecture · AI Enablement · Cloud-Native Platforms",
     githubUsername: "omsoni",
-    email: "om.soni@gignav.com",
+    email: "omsoni@gmail.com",
     blurb:
-      "Enterprise Architect working across software, AI/ML, and platform " +
-      "engineering. This site collects reference architectures, diagrams, and " +
-      "links to the work behind them.",
+      "Enterprise Architecture leader with 20+ years across Fortune 500 " +
+      "organizations and startups — defining enterprise-wide architecture " +
+      "strategy, aligning business capabilities with technology platforms, and " +
+      "driving large-scale, AI-enabled transformation with measurable impact.",
+    strengths: [
+      "Enterprise Architecture",
+      "Enterprise AI Strategy and Enablement",
+      "Solution Architecture",
+      "SaaS and Startup Experience",
+      "Hands-on Software Engineering Leader",
+      "Helping Organizations with AI Enablement",
+    ],
     links: [
+      { label: "LinkedIn", url: "https://www.linkedin.com/in/omsoni/", type: "external" },
       { label: "GitHub", url: "https://github.com/omsoni", type: "external" },
-      { label: "Email", url: "mailto:om.soni@gignav.com", type: "external" },
-      // { label: "LinkedIn", url: "https://www.linkedin.com/in/...", type: "external" },
+      { label: "Email", url: "mailto:omsoni@gmail.com", type: "external" },
     ],
   },
 
@@ -62,6 +71,45 @@ const SITE = {
     home: {
       hero: true,
       sections: [
+        {
+          heading: "Professional Summary",
+          markdown:
+            "20+ years as Chief Architect, Principal Enterprise Architect, and " +
+            "technology strategist across Fortune 500 organizations and startups. " +
+            "Proven track record of defining enterprise-wide architecture strategy, " +
+            "aligning business capabilities with technology platforms, and driving " +
+            "large-scale transformation. Deep expertise in cloud-native platforms, " +
+            "enterprise data ecosystems, and AI-driven systems — with a focus on " +
+            "scalability, governance, and measurable business impact.\n\n" +
+            "## Core Expertise\n" +
+            "- **Architecture:** Enterprise & solution architecture, reference architectures, roadmaps, Architecture Review Boards\n" +
+            "- **Cloud-native:** AWS, Azure, GCP — Kubernetes, serverless, microservices, APIs\n" +
+            "- **Data:** Data lakes & warehouses, DaaS, enterprise data models — SQL/NoSQL, graph, time-series, in-memory\n" +
+            "- **AI / ML:** Deep learning (MLP/CNN/RNN), NLP (Transformers, RAG), LLMs (Claude, GPT, HF), Agentic AI (LangChain), MCP\n" +
+            "- **Languages:** Java, Python, Go, C++, R",
+        },
+        {
+          heading: "Technology Leadership",
+          markdown:
+            "- **Principal Enterprise Architect (Director, IC)** — Expedia Group — Mar 2025 to Present\n" +
+            "- **Principal Engineer** — GEICO — Dec 2023 to Mar 2025\n" +
+            "- **Principal Architect & Engineer** — Neiman Marcus — Oct 2021 to Aug 2023\n" +
+            "- **Co-founder & Chief Architect** — Gignav — Jun 2019 to Oct 2021\n" +
+            "- **Principal Architect / Director, Software Engineering** — GE Digital — Sep 2016 to Mar 2019\n" +
+            "- **Senior Enterprise Architect** — GE Aviation — Mar 2014 to Aug 2016\n" +
+            "- **Chief Applications Architect** — GE Transportation — Sep 2011 to Mar 2014\n" +
+            "- **Enterprise Architect** — GE Capital — Feb 2010 to Sep 2011",
+        },
+        {
+          heading: "Certifications & Education",
+          markdown:
+            "## Certifications\n" +
+            "- AWS Certified Solution Architect – Professional (2023–2026)\n" +
+            "- TOGAF Certified Enterprise Architect Practitioner (2023–2026)\n\n" +
+            "## Education\n" +
+            "- M.S., Data & Analytics — Wayne State University\n" +
+            "- PG Diploma in AI/ML — The University of Texas at Austin (2025–2026)",
+        },
         {
           heading: "Focus Areas",
           body: "Pick an area to explore reference architectures, diagrams, and links.",

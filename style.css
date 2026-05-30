@@ -122,6 +122,23 @@ main {
 .hero h1 { margin: 0 0 .35rem; font-size: 2.3rem; }
 .hero .role { color: var(--accent); font-weight: 600; font-size: 1.15rem; margin: 0 0 .75rem; }
 .hero .blurb { max-width: 72ch; margin: 0 0 1.25rem; color: var(--text); }
+.hero__strengths {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+.hero__strengths .pill {
+  background: #eef2ff;
+  color: var(--accent-dk);
+  border: 1px solid #c7d2fe;
+  border-radius: 999px;
+  padding: .32rem .75rem;
+  font-size: .85rem;
+  font-weight: 600;
+}
 .hero__links { display: flex; flex-wrap: wrap; gap: .6rem; }
 
 /* ---------- Cards / sections ---------- */
